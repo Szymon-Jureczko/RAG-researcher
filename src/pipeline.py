@@ -37,3 +37,22 @@ def parse_pdf_directory(pdf_dir: str, domain: Optional[str] = None) -> list[Docu
         except Exception as exc:
             logger.warning("Skipping '%s': %s", pdf_path, exc)
     return docs
+
+
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+
+def chunk_documents(
+    docs: list[Document],
+    chunk_size: int = 1000,
+    chunk_overlap: int = 200,
+) -> list[Document]:
+    """Split documents into semantic chunks, preserving metadata."""
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+        separators=["\n\n", "\n", ". ", " ", ""],
+    )
+    chunks = splitter.split_documents(docs)
+    logger.info("Split %d documents into %d chunks.", len(docs), len(chunks))
+    return chunks
