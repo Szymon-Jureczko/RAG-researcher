@@ -40,7 +40,11 @@ def fetch_arxiv_papers(
         client = arxiv_lib.Client()
         search = arxiv_lib.Search(query=domain_query, max_results=max_results)
         docs = []
-        for result in client.results(search):
+        results = list(client.results(search))
+        if not results:
+            logger.warning("arXiv returned 0 results for query: %s", domain_query)
+            return []
+        for result in results:
             docs.append(
                 Document(
                     page_content=result.summary,
