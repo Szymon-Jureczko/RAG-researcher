@@ -1,15 +1,15 @@
-domains:
-  ml:
-    arxiv_query: "cs.LG OR cs.AI"
-  physics:
-    arxiv_query: "physics.gen-ph"
-  bio:
-    arxiv_query: "q-bio"
+sources:
+  arxiv:
+    max_results: 100
+  local:
+    pdf_dir: "data/papers/"
 
 chunking:
   chunk_size: 1000
   chunk_overlap: 200
 
-paths:
-  pdf_dir: "data/papers/"
-  faiss_index: "data/faiss_index"
+embeddings:
+  model: "sentence-transformers/all-MiniLM-L6-v2"
+
+vector_store:
+  faiss_index_path: "data/faiss_index"

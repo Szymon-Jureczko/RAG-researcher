@@ -56,3 +56,13 @@ def chunk_documents(
     chunks = splitter.split_documents(docs)
     logger.info("Split %d documents into %d chunks.", len(docs), len(chunks))
     return chunks
+
+
+from langchain_huggingface import HuggingFaceEmbeddings
+
+
+def embed_chunks(chunks: list[Document], embedding_model: str):
+    """Compute embeddings for the given chunks (returns the embedder + chunks)."""
+    embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+    logger.info("Initialised embedder: %s", embedding_model)
+    return embeddings, chunks
