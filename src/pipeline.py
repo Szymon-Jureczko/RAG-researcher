@@ -56,6 +56,16 @@ def build_faiss_index(
     return vectorstore
 
 
+def load_faiss_index(index_path: str, embedding_model: str) -> FAISS:
+    """Load a previously persisted FAISS index from disk."""
+    if not Path(index_path).exists():
+        raise FileNotFoundError(f"FAISS index directory not found: {index_path}")
+    embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+    return FAISS.load_local(
+        index_path, embeddings, allow_dangerous_deserialization=True
+    )
+
+
 def run_pipeline(docs: list[Document], config_path: str = "config.yaml") -> FAISS:
     """Chunk -> embed -> index."""
     if not docs:
