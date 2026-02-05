@@ -29,12 +29,17 @@ def chunk_documents(
     chunk_size: int = 1000,
     chunk_overlap: int = 200,
 ) -> list[Document]:
+    """Split documents and propagate domain/source metadata to every chunk."""
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
         separators=["\n\n", "\n", ". ", " ", ""],
     )
     chunks = splitter.split_documents(docs)
+    # LangChain propagates parent metadata to children; ensure required keys
+    for c in chunks:
+        c.metadata.setdefault("domain", "")
+        c.metadata.setdefault("source", "")
     logger.info("Split %d -> %d chunks.", len(docs), len(chunks))
     return chunks
 
