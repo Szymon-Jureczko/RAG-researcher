@@ -52,6 +52,9 @@ def build_faiss_index(
     """Embed chunks and persist a FAISS index to disk."""
     if not chunks:
         raise ValueError("Cannot build FAISS index: chunk list is empty.")
+    chunks = [c for c in chunks if c.page_content and c.page_content.strip()]
+    if not chunks:
+        raise ValueError("All chunks were empty after stripping; nothing to embed.")
     logger.info("Building FAISS index | %s | %d chunks", embedding_model, len(chunks))
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
     vectorstore = FAISS.from_documents(chunks, embeddings)
