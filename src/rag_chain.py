@@ -38,3 +38,8 @@ def load_faiss_index(index_path: str, embedding_model: str) -> FAISS:
     return FAISS.load_local(
         index_path, embeddings, allow_dangerous_deserialization=True
     )
+
+
+def build_retriever(vectorstore: FAISS, k: int = 5):
+    """Return a basic similarity-search retriever."""
+    return vectorstore.as_retriever(search_kwargs={"k": k})
