@@ -13,3 +13,19 @@ embeddings:
 
 vector_store:
   faiss_index_path: "data/faiss_index"
+
+llm:
+  standard:
+    model_name: "gpt-4o-mini"
+    temperature: 0.0
+    max_tokens: 1024
+  research:
+    model_name: "gpt-4o"
+    temperature: 0.2
+    max_tokens: 4096
+
+retrieval:
+  k: 5
+  rerank_k: 20
+  bm25_weight: 0.5
+  vector_weight: 0.5
