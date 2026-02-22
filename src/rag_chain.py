@@ -54,7 +54,7 @@ def _format_docs(docs: list[Document]) -> str:
     return "\n\n".join(d.page_content for d in docs)
 
 
-def create_rag_pipeline(config_path: str = "config.yaml") -> Any:
+def create_rag_pipeline(config_path: str = "config.yaml", return_sources: bool = False) -> Any:
     """Build a basic LCEL RAG chain from the persisted FAISS index."""
     config = load_config(config_path)
     embedding_model = config.get("embeddings", {}).get(
@@ -71,10 +71,16 @@ def create_rag_pipeline(config_path: str = "config.yaml") -> Any:
     llm = build_llm(config, tier="standard")
     prompt = ChatPromptTemplate.from_template(_PROMPT)
 
-    chain = (
+    answer_chain = (
         {"context": retriever | _format_docs, "question": RunnablePassthrough()}
         | prompt
         | llm
         | StrOutputParser()
     )
-    return chain
+    if not return_sources:
+        return answer_chain
+
+    def _with_sources(question: str) -> dict:
+        docs = retriever.invoke(question)
+        return {"answer": answer_chain.invoke(question), "sources": docs}
+    return _with_sources
