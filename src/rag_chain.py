@@ -1,8 +1,21 @@
-"""RAG chain: LLM retrieval and generation logic."""
+"""RAG chain: LLM retrieval and generation logic.
+
+QueryMode controls which LLM tier handles answer generation:
+- STANDARD: gpt-4o-mini for factual lookups (~95% of traffic)
+- RESEARCH: gpt-4o for synthesis and hypothesis generation
+"""
 
 import logging
+from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
+
+
+class QueryMode(str, Enum):
+    STANDARD = "standard"
+    RESEARCH = "research"
+
+
 
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
@@ -18,10 +31,22 @@ from src.config import get_env_var, load_config
 logger = logging.getLogger(__name__)
 
 
-_PROMPT = """You are a research assistant. Answer the question concisely using only the context below.
+_STANDARD_PROMPT = """You are a research assistant. Answer the question concisely using only the context below.
 If the context is insufficient, say so explicitly. Do not speculate.
 
 Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+
+
+_SYNTHESIS_PROMPT = """You are an expert research analyst.
+Read the question carefully and answer it directly using the research papers below.
+Cite authors/titles where possible. If the papers do not contain enough information, say so.
+
+Research Papers:
 {context}
 
 Question: {question}
@@ -54,7 +79,7 @@ def _format_docs(docs: list[Document]) -> str:
     return "\n\n".join(d.page_content for d in docs)
 
 
-def create_rag_pipeline(config_path: str = "config.yaml", return_sources: bool = False) -> Any:
+def create_rag_pipeline(config_path: str = "config.yaml", mode: QueryMode = QueryMode.STANDARD, return_sources: bool = False) -> Any:
     """Build a basic LCEL RAG chain from the persisted FAISS index."""
     config = load_config(config_path)
     embedding_model = config.get("embeddings", {}).get(
@@ -68,8 +93,9 @@ def create_rag_pipeline(config_path: str = "config.yaml", return_sources: bool =
     vectorstore = load_faiss_index(index_path, embedding_model)
     retriever = vectorstore.as_retriever(search_kwargs={"k": k})
 
-    llm = build_llm(config, tier="standard")
-    prompt = ChatPromptTemplate.from_template(_PROMPT)
+    llm = build_llm(config, tier=mode.value)
+    template = _SYNTHESIS_PROMPT if mode == QueryMode.RESEARCH else _STANDARD_PROMPT
+    prompt = ChatPromptTemplate.from_template(template)
 
     answer_chain = (
         {"context": retriever | _format_docs, "question": RunnablePassthrough()}
