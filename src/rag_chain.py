@@ -60,7 +60,7 @@ def build_llm(config: dict, tier: str = "standard") -> BaseChatModel:
     temperature = llm_cfg.get("temperature", 0.0)
     max_tokens = llm_cfg.get("max_tokens", 1024)
     api_key = get_env_var("OPENAI_API_KEY")
-    logger.info("LLM | tier=%s | model=%s", tier, model_name)
+    logger.info("LLM | tier=%s | model=%s (OpenAI)", tier, model_name)
     return ChatOpenAI(
         model=model_name, temperature=temperature, max_tokens=max_tokens, api_key=api_key
     )
