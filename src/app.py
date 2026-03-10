@@ -29,12 +29,20 @@ def main() -> None:
 
     question = st.text_input("Ask a research question")
     if question:
-        with st.spinner("Generating answer..."):
+        with st.spinner("Retrieving and generating answer..."):
             try:
-                chain = create_rag_pipeline()
-                answer = chain.invoke(question)
+                chain = create_rag_pipeline(return_sources=True)
+                result = chain(question) if callable(chain) else {"answer": chain.invoke(question), "sources": []}
                 st.markdown("### Answer")
-                st.write(answer)
+                st.write(result["answer"])
+                if result.get("sources"):
+                    with st.expander("Retrieved sources"):
+                        for i, doc in enumerate(result["sources"], 1):
+                            meta = doc.metadata
+                            title = meta.get("title") or meta.get("source", "Unknown")
+                            st.markdown(f"**{i}. {title}**")
+                            st.caption(f"domain: {meta.get('domain', '-')}  |  source: {meta.get('source', '-')}")
+                            st.text(doc.page_content[:400] + "...")
             except FileNotFoundError:
                 st.error("No FAISS index found. Run the ingestion pipeline first.")
 
