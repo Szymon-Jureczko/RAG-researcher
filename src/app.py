@@ -5,6 +5,10 @@ import logging
 import streamlit as st
 
 from src.config import load_config
+from pathlib import Path
+
+from src.pipeline import run_pipeline
+from src.crawlers import fetch_local_pdfs
 from src.rag_chain import create_rag_pipeline
 
 logging.basicConfig(level=logging.INFO)
@@ -26,6 +30,22 @@ def main() -> None:
             options=["standard (gpt-4o-mini)", "research (gpt-4o)"],
             index=0,
         )
+
+        st.divider()
+        st.subheader("Ingest PDFs")
+        pdf_dir = cfg.get("sources", {}).get("local", {}).get("pdf_dir", "data/papers/")
+        uploaded_files = st.file_uploader(
+            "Upload PDFs", type="pdf", accept_multiple_files=True
+        )
+        if st.button("Run ingestion") and uploaded_files:
+            save_dir = Path(pdf_dir)
+            save_dir.mkdir(parents=True, exist_ok=True)
+            for uf in uploaded_files:
+                (save_dir / uf.name).write_bytes(uf.getvalue())
+            with st.spinner("Indexing..."):
+                docs = fetch_local_pdfs(pdf_dir)
+                run_pipeline(docs, CONFIG_PATH)
+            st.success(f"Ingested {len(uploaded_files)} PDF(s)")
 
     question = st.text_input("Ask a research question")
     if question:
