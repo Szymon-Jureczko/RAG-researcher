@@ -64,7 +64,7 @@ def main() -> None:
                             st.caption(f"domain: {meta.get('domain', '-')}  |  source: {meta.get('source', '-')}")
                             st.text(doc.page_content[:400] + "...")
             except FileNotFoundError:
-                st.error("No FAISS index found. Run the ingestion pipeline first.")
+                st.error("No FAISS index found. Upload PDFs and run ingestion first.")
 
 
 if __name__ == "__main__":
