@@ -17,6 +17,8 @@ class QueryMode(str, Enum):
 
 
 
+from langchain.retrievers import EnsembleRetriever
+from langchain_community.retrievers import BM25Retriever
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
@@ -91,7 +93,11 @@ def create_rag_pipeline(config_path: str = "config.yaml", mode: QueryMode = Quer
     k = config.get("retrieval", {}).get("k", 5)
 
     vectorstore = load_faiss_index(index_path, embedding_model)
-    retriever = vectorstore.as_retriever(search_kwargs={"k": k})
+    corpus_docs: list[Document] = list(vectorstore.docstore._dict.values())
+    bm25 = BM25Retriever.from_documents(corpus_docs)
+    bm25.k = k
+    vec = vectorstore.as_retriever(search_kwargs={"k": k})
+    retriever = EnsembleRetriever(retrievers=[bm25, vec], weights=[0.5, 0.5])
 
     llm = build_llm(config, tier=mode.value)
     template = _SYNTHESIS_PROMPT if mode == QueryMode.RESEARCH else _STANDARD_PROMPT
