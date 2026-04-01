@@ -116,3 +116,39 @@ def create_rag_pipeline(config_path: str = "config.yaml", mode: QueryMode = Quer
         docs = retriever.invoke(question)
         return {"answer": answer_chain.invoke(question), "sources": docs}
     return _with_sources
+
+
+def rerank_documents(
+    docs: list[Document],
+    question: str,
+    llm: BaseChatModel,
+    k: int = 5,
+) -> list[Document]:
+    """Re-rank candidate documents with a single gpt-4o-mini call."""
+    if len(docs) <= k:
+        return docs
+    chunks_text = "\n\n".join(
+        f"[{i}] {d.page_content[:600]}" for i, d in enumerate(docs)
+    )
+    prompt = ChatPromptTemplate.from_template(
+        "Given a question and numbered chunks, return the {k} most relevant indices "
+        "as a comma-separated list (0-based, no other text).\n\n"
+        "Question: {question}\n\nChunks:\n{chunks}\n\nIndices:"
+    )
+    chain = prompt | llm | StrOutputParser()
+    try:
+        response = chain.invoke({"question": question, "chunks": chunks_text, "k": k})
+    except Exception as exc:
+        logger.warning("Re-ranking failed; using original order: %s", exc)
+        return docs[:k]
+    indices: list[int] = []
+    for part in response.strip().split(","):
+        try:
+            i = int(part.strip())
+            if 0 <= i < len(docs) and i not in indices:
+                indices.append(i)
+        except ValueError:
+            continue
+    if not indices:
+        return docs[:k]
+    return [docs[i] for i in indices[:k]]
