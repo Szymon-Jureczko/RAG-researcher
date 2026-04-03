@@ -14,6 +14,7 @@ from src.crawlers import (
     fetch_pubmed_papers,
     fetch_semantic_scholar_papers,
     fetch_wikipedia_articles,
+    filter_relevant_docs,
 )
 from src.rag_chain import create_rag_pipeline
 
