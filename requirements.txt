@@ -12,6 +12,7 @@ arxiv>=2.1.0
 
 # ── Vector stores & search ──
 faiss-cpu>=1.7.4
+rank-bm25>=0.2.2
 
 # ── Embeddings ──
 sentence-transformers>=2.6.0
@@ -22,3 +23,7 @@ python-dotenv>=1.0.0
 
 # ── Frontend ──
 streamlit>=1.32.0
+
+# ── Additional ingestion sources ──
+xmltodict>=0.13.0     # PubMed (PubMedLoader dependency)
+wikipedia>=1.4.0      # Wikipedia articles
