@@ -27,3 +27,9 @@ streamlit>=1.32.0
 # ── Additional ingestion sources ──
 xmltodict>=0.13.0     # PubMed (PubMedLoader dependency)
 wikipedia>=1.4.0      # Wikipedia articles
+
+# ── Evaluation (RAG Triad / LLM-as-a-Judge) ──
+ragas>=0.2.0
+datasets>=2.14.0
+pandas>=2.0.0
+rapidfuzz>=3.0.0      # ragas testset generation (OverlapScoreBuilder dependency)
