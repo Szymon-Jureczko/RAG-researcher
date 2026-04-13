@@ -16,7 +16,7 @@ from langchain_openai import ChatOpenAI
 from ragas import EvaluationDataset, SingleTurnSample, evaluate
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from ragas.llms import LangchainLLMWrapper
-from ragas.metrics import AnswerRelevancy, Faithfulness
+from ragas.metrics import AnswerRelevancy, ContextPrecision, Faithfulness
 
 from src.config import get_env_var, load_config
 from src.rag_chain import QueryMode, create_rag_pipeline
@@ -73,6 +73,7 @@ def run_evaluation(records: list[GoldenRecord]) -> pd.DataFrame:
     metrics = [
         Faithfulness(llm=judge_llm),
         AnswerRelevancy(llm=judge_llm, embeddings=judge_embeddings),
+        ContextPrecision(llm=judge_llm),
     ]
     chain = create_rag_pipeline(mode=QueryMode.STANDARD)
     samples: list[SingleTurnSample] = []
@@ -96,3 +97,36 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     df = run_evaluation(load_golden_dataset())
     print(df)
+
+
+def generate_synthetic_dataset(n: int = 10) -> list[GoldenRecord]:
+    """Auto-generate a golden dataset from the indexed corpus using RAGAS.
+
+    Domain-agnostic: works for ANY subject matter. Requires ragas>=0.2.
+    """
+    from ragas.testset import TestsetGenerator
+
+    cfg = load_config(_EVAL_CONFIG_PATH)
+    embedding_model = cfg.get("embeddings", {}).get(
+        "model", "sentence-transformers/all-MiniLM-L6-v2"
+    )
+    judge_llm = _build_judge_llm()
+    judge_embeddings = _build_judge_embeddings(embedding_model)
+
+    from src.rag_chain import load_faiss_index
+    index_path = cfg.get("vector_store", {}).get(
+        "faiss_index_path", "data/faiss_index"
+    )
+    vectorstore = load_faiss_index(index_path, embedding_model)
+    docs = list(vectorstore.docstore._dict.values())
+
+    generator = TestsetGenerator(llm=judge_llm, embedding_model=judge_embeddings)
+    testset = generator.generate_with_langchain_docs(docs, testset_size=n)
+    return [
+        GoldenRecord(
+            question=s.user_input,
+            reference_answer=s.reference or "",
+        )
+        for s in testset.samples
+        if s.user_input
+    ]
