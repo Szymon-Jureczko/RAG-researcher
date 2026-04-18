@@ -1,0 +1,10 @@
+.venv/
+.env
+.git/
+.github/
+.vscode/
+__pycache__/
+*.py[cod]
+*.egg-info/
+data/faiss_index/
+data/papers/*.pdf
