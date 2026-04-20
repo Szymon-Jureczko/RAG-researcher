@@ -1,0 +1,37 @@
+services:
+
+  # ── Streamlit app ─────────────────────────────────────────────────────────
+  app:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app                        # live code reload
+      - app_data:/app/data            # persist FAISS index between restarts
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # ── Weaviate (production hybrid search) ───────────────────────────────────
+  # Start with: docker compose --profile weaviate up
+  # Set WEAVIATE_URL=http://weaviate:8080 in .env to use it
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.25.4
+    profiles: ["weaviate"]
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: none
+      ENABLE_MODULES: ""
+      CLUSTER_HOSTNAME: "node1"
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    restart: unless-stopped
+
+volumes:
+  app_data:
+  weaviate_data:
