@@ -27,6 +27,9 @@ python-dotenv>=1.0.0
 # ── Frontend ──
 streamlit>=1.32.0
 
+# ── Pipeline orchestration ──
+apache-airflow>=2.8.0
+
 # ── Additional ingestion sources ──
 xmltodict>=0.13.0     # PubMed (PubMedLoader dependency)
 wikipedia>=1.4.0      # Wikipedia articles
