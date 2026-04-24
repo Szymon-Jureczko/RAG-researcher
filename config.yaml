@@ -1,6 +1,12 @@
 sources:
   arxiv:
     max_results: 100
+  pubmed:
+    max_results: 50
+  semantic_scholar:
+    max_results: 50
+  wikipedia:
+    max_results: 3
   local:
     pdf_dir: "data/papers/"
 
@@ -13,19 +19,29 @@ embeddings:
 
 vector_store:
   faiss_index_path: "data/faiss_index"
+  weaviate_url: null # Override via WEAVIATE_URL in .env for production
 
 llm:
+  # gpt-4o-mini: ~95% of all requests (ingestion, standard queries, re-ranking)
   standard:
     model_name: "gpt-4o-mini"
     temperature: 0.0
     max_tokens: 1024
+  # gpt-4o: reserved for synthesis and hypothesis generation
+  # Swap model_name to "claude-3-5-sonnet-20241022" and set ANTHROPIC_API_KEY in .env
   research:
     model_name: "gpt-4o"
     temperature: 0.2
     max_tokens: 4096
+  # gpt-4o-mini: structured metadata extraction during ingestion
+  metadata:
+    model_name: "gpt-4o-mini"
+    temperature: 0.0
+    max_tokens: 512
 
 retrieval:
-  k: 5
-  rerank_k: 20
+  k: 5 # final chunks passed to the answer LLM after re-ranking
+  rerank_k: 20 # initial broad retrieval count fed into the re-ranker
+  research_k: 10 # final chunks for RESEARCH mode (synthesis needs more context)
   bm25_weight: 0.5
   vector_weight: 0.5

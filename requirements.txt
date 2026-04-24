@@ -6,6 +6,9 @@ langchain-openai>=0.2.0,<0.3.0
 langchain-huggingface>=0.1.0,<0.2.0
 langchain-text-splitters>=0.3.0,<0.4.0
 
+# ── Anthropic (optional: needed only when llm.research.model_name starts with "claude") ──
+langchain-anthropic>=0.3.0,<0.4.0
+
 # ── Document parsing ──
 pymupdf4llm>=0.0.10
 arxiv>=2.1.0
