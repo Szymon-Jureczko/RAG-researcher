@@ -8,15 +8,8 @@ from src.config import load_config
 from pathlib import Path
 
 from src.pipeline import run_pipeline
-from src.crawlers import (
-    fetch_arxiv_papers,
-    fetch_local_pdfs,
-    fetch_pubmed_papers,
-    fetch_semantic_scholar_papers,
-    fetch_wikipedia_articles,
-    filter_relevant_docs,
-)
-from src.rag_chain import create_rag_pipeline
+from src.crawlers import fetch_local_pdfs
+from src.rag_chain import QueryMode, create_rag_pipeline
 
 logging.basicConfig(level=logging.INFO)
 CONFIG_PATH = "config.yaml"
@@ -32,11 +25,12 @@ def main() -> None:
         st.header("Configuration")
         domains = list(cfg.get("domains", {}).keys()) or ["all"]
         domain = st.selectbox("Domain", options=["all"] + domains, index=0)
-        model = st.radio(
-            "Model tier",
-            options=["standard (gpt-4o-mini)", "research (gpt-4o)"],
+        mode_choice = st.radio(
+            "Query mode",
+            options=["Standard (gpt-4o-mini)", "Deep Research (gpt-4o / Claude)"],
             index=0,
         )
+        active_mode = QueryMode.RESEARCH if mode_choice.startswith("Deep") else QueryMode.STANDARD
 
         st.divider()
         st.subheader("Ingest PDFs")
@@ -58,7 +52,7 @@ def main() -> None:
     if question:
         with st.spinner("Retrieving and generating answer..."):
             try:
-                chain = create_rag_pipeline(return_sources=True)
+                chain = create_rag_pipeline(mode=active_mode, return_sources=True)
                 result = chain(question) if callable(chain) else {"answer": chain.invoke(question), "sources": []}
                 st.markdown("### Answer")
                 st.write(result["answer"])
